@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex" />
+  <title>Edwin Choi — Staff UX Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="gate" class="gate">
+    <form id="gate-form" class="gate__form">
+      <p class="boot__name">Edwin Choi</p>
+      <p class="boot__role">Staff UX Designer @ Verily</p>
+      <label class="gate__label" for="gate-password">Password</label>
+      <input
+        id="gate-password"
+        class="gate__input"
+        type="password"
+        name="password"
+        autocomplete="current-password"
+        autofocus
+      />
+      <p class="gate__error" id="gate-error" hidden>Incorrect password</p>
+      <button class="gate__submit" type="submit">Enter</button>
+    </form>
+  </div>
+
+  <div id="boot" class="boot" hidden aria-live="polite">
+    <div class="boot__copy">
+      <p class="boot__name">Edwin Choi</p>
+      <p class="boot__role">Staff UX Designer @ Verily</p>
+    </div>
+    <div class="boot__progress" aria-hidden="true">
+      <span id="boot-bar"></span>
+    </div>
+  </div>
+
+  <main class="deck" id="deck" hidden>
+    <div class="stage" id="stage">
+      <img id="layer-a" class="layer is-visible" alt="" width="1920" height="1080" />
+      <img id="layer-b" class="layer" alt="" width="1920" height="1080" />
+      <video
+        id="slide-video"
+        class="slide-video"
+        muted
+        loop
+        playsinline
+        preload="auto"
+      ></video>
+    </div>
+
+    <button class="hit hit--prev" id="hit-prev" type="button" aria-label="Previous slide"></button>
+    <button class="hit hit--next" id="hit-next" type="button" aria-label="Next slide"></button>
+
+    <div class="chrome" id="chrome">
+      <div class="chrome__top">
+        <span class="chrome__name">Edwin Choi</span>
+        <span class="chrome__section" id="section-label"></span>
+      </div>
+      <div class="chrome__bottom">
+        <button class="chrome__btn" id="btn-overview" type="button">Overview</button>
+        <div class="chrome__counter" id="counter">1 / 1</div>
+        <button class="chrome__btn" id="btn-full" type="button">Fullscreen</button>
+      </div>
+      <div class="chrome__track" aria-hidden="true">
+        <span id="progress"></span>
+      </div>
+    </div>
+  </main>
+
+  <p class="hint" id="hint" hidden>Use arrow keys to present</p>
+
+  <section class="overview" id="overview" hidden>
+    <header class="overview__head">
+      <h1>All slides</h1>
+      <button class="chrome__btn" id="btn-close-overview" type="button">Close</button>
+    </header>
+    <div class="overview__grid" id="overview-grid"></div>
+  </section>
+
+  <section class="help" id="help" hidden>
+    <div class="help__card">
+      <h2>Shortcuts</h2>
+      <dl>
+        <div><dt>← → Space</dt><dd>Previous / next</dd></div>
+        <div><dt>Home / End</dt><dd>First / last</dd></div>
+        <div><dt>F</dt><dd>Fullscreen</dd></div>
+        <div><dt>O</dt><dd>Overview</dd></div>
+        <div><dt>?</dt><dd>This help</dd></div>
+        <div><dt>Esc</dt><dd>Close</dd></div>
+      </dl>
+      <button class="chrome__btn" id="btn-close-help" type="button">Close</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
