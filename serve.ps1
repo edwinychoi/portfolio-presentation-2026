@@ -69,10 +69,36 @@ public static class TinyStaticHost {
       else if (ext == ".webm") mime = "video/webm";
       else if (ext == ".mp4") mime = "video/mp4";
       else if (ext == ".mov") mime = "video/quicktime";
-      var bytes = File.ReadAllBytes(local);
       res.ContentType = mime;
-      res.ContentLength64 = bytes.LongLength;
-      res.OutputStream.Write(bytes, 0, bytes.Length);
+      res.AddHeader("Accept-Ranges", "bytes");
+      var length = new FileInfo(local).Length;
+      var range = ctx.Request.Headers["Range"];
+      long start = 0;
+      long end = length - 1;
+      if (!string.IsNullOrEmpty(range) && range.StartsWith("bytes=")) {
+        var spec = range.Substring(6);
+        var parts = spec.Split('-');
+        if (parts.Length > 0 && parts[0] != "") start = long.Parse(parts[0]);
+        if (parts.Length > 1 && parts[1] != "") end = long.Parse(parts[1]);
+        if (start < 0) start = 0;
+        if (end >= length) end = length - 1;
+        if (start > end) start = 0;
+        res.StatusCode = 206;
+        res.AddHeader("Content-Range", "bytes " + start + "-" + end + "/" + length);
+      }
+      var count = (int)(end - start + 1);
+      res.ContentLength64 = count;
+      using (var fs = File.OpenRead(local)) {
+        fs.Seek(start, SeekOrigin.Begin);
+        var buffer = new byte[81920];
+        var remaining = count;
+        while (remaining > 0) {
+          var read = fs.Read(buffer, 0, Math.Min(buffer.Length, remaining));
+          if (read <= 0) break;
+          res.OutputStream.Write(buffer, 0, read);
+          remaining -= read;
+        }
+      }
       res.Close();
     } catch {
       try { ctx.Response.Abort(); } catch {}

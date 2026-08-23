@@ -9,54 +9,57 @@ const counter = document.getElementById("counter");
 const progress = document.getElementById("progress");
 const sectionLabel = document.getElementById("section-label");
 const hint = document.getElementById("hint");
+const videoSlot = document.getElementById("video-slot");
 const slideVideo = document.getElementById("slide-video");
+const videoPlay = document.getElementById("video-play");
+const videoSeek = document.getElementById("video-seek");
+const videoTime = document.getElementById("video-time");
 const overview = document.getElementById("overview");
 const overviewGrid = document.getElementById("overview-grid");
 const help = document.getElementById("help");
 
-const PAGE_COUNT = 71;
+const PAGE_COUNT = 65;
 const SECTIONS = [
-  { until: 13, label: "Journey" },
-  { until: 37, label: "Canvas" },
-  { until: 49, label: "Workbench" },
-  { until: 69, label: "Member portal" },
-  { until: Infinity, label: "" },
+  { until: 11, label: "Journey" },
+  { until: 47, label: "Canvas" },
+  { until: Infinity, label: "Workbench" },
 ];
 
-const FRAME_NARROW = {
-  left: 735 / 1920,
-  top: 130 / 1080,
+const FRAME_SIDE = {
+  left: 737 / 1920,
+  top: 127 / 1080,
   width: 1087 / 1920,
   height: 786 / 1080,
   radius: 17 / 1920,
 };
 
-const FRAME_WIDE_NOW = {
-  left: 737 / 1920,
-  top: 148 / 1080,
+const FRAME_SIDE_WB = {
+  left: 735 / 1920,
+  top: 147 / 1080,
   width: 1087 / 1920,
-  height: 785 / 1080,
-  radius: 14 / 1920,
+  height: 786 / 1080,
+  radius: 17 / 1920,
 };
 
-const FRAME_WIDE_WB = {
-  left: 735 / 1920,
-  top: 168 / 1080,
-  width: 1087 / 1920,
-  height: 785 / 1080,
-  radius: 18 / 1920,
+const FRAME_CENTER = {
+  left: 319 / 1920,
+  top: 103 / 1080,
+  width: 1282 / 1920,
+  height: 927 / 1080,
+  radius: 17 / 1920,
 };
 
 const VIDEOS = {
-  27: { src: "./media/canvas-solution-1.mp4", ...FRAME_NARROW },
-  28: { src: "./media/canvas-solution-2.mp4", ...FRAME_NARROW },
-  29: { src: "./media/canvas-solution-3.mp4", ...FRAME_NARROW },
-  30: { src: "./media/canvas-solution-4.mp4", ...FRAME_NARROW },
-  33: { src: "./media/canvas-near.mp4", ...FRAME_WIDE_NOW },
-  34: { src: "./media/canvas-next.mp4", ...FRAME_WIDE_NOW },
-  35: { src: "./media/canvas-later.mp4", ...FRAME_WIDE_NOW },
-  43: { src: "./media/legacy-workbench.mov", ...FRAME_WIDE_WB },
-  45: { src: "./media/workbench-north-star.mov", ...FRAME_WIDE_WB },
+  25: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
+  26: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
+  27: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
+  28: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
+  29: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
+  38: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, ...FRAME_CENTER },
+  41: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, ...FRAME_CENTER },
+  44: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  58: { src: "./media/aligned-product-leadership.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
+  63: { src: "./media/user-scoped-agents.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -70,6 +73,7 @@ let chromeTimer = 0;
 let wheelLock = false;
 let overviewBuilt = false;
 let activeVideoSrc = "";
+let seekingVideo = false;
 
 const GATE_STORAGE = "deck-unlocked";
 const GATE_PASSWORD = "jujube";
@@ -127,10 +131,50 @@ function showChromeBriefly() {
   chromeTimer = window.setTimeout(() => chromeEl.classList.remove("is-on"), 1800);
 }
 
+function fitEqualPad(frameW, frameH, videoW, videoH) {
+  if (!videoW || !videoH) {
+    return { x: 0, y: 0, w: frameW, h: frameH };
+  }
+  const ar = videoW / videoH;
+  const pad = (frameW - ar * frameH) / (2 * (1 - ar));
+  if (Number.isFinite(pad) && pad >= 0 && pad < Math.min(frameW, frameH) / 2) {
+    return { x: pad, y: pad, w: frameW - 2 * pad, h: frameH - 2 * pad };
+  }
+  const scale = Math.min(frameW / videoW, frameH / videoH);
+  const w = videoW * scale;
+  const h = videoH * scale;
+  return { x: (frameW - w) / 2, y: (frameH - h) / 2, w, h };
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function updateVideoControls() {
+  const duration = slideVideo.duration || 0;
+  const current = slideVideo.currentTime || 0;
+  if (!seekingVideo && duration) {
+    videoSeek.value = String(Math.round((current / duration) * 1000));
+  }
+  videoTime.textContent = duration
+    ? `${formatTime(current)} / ${formatTime(duration)}`
+    : "0:00";
+  videoSlot.classList.toggle("is-paused", slideVideo.paused);
+  videoPlay.setAttribute("aria-label", slideVideo.paused ? "Play" : "Pause");
+}
+
+function toggleVideoPlay() {
+  if (slideVideo.paused) slideVideo.play().catch(() => {});
+  else slideVideo.pause();
+}
+
 function layoutSlideVideo() {
   const spec = VIDEOS[index + 1];
   if (!spec) {
-    slideVideo.classList.remove("is-on");
+    videoSlot.classList.remove("is-on");
     slideVideo.pause();
     activeVideoSrc = "";
     return;
@@ -138,12 +182,22 @@ function layoutSlideVideo() {
 
   const slideRect = front.getBoundingClientRect();
   const stageRect = stage.getBoundingClientRect();
-  slideVideo.style.left = `${slideRect.left - stageRect.left + slideRect.width * spec.left}px`;
-  slideVideo.style.top = `${slideRect.top - stageRect.top + slideRect.height * spec.top}px`;
-  slideVideo.style.width = `${slideRect.width * spec.width}px`;
-  slideVideo.style.height = `${slideRect.height * spec.height}px`;
-  slideVideo.style.borderRadius = `${slideRect.width * spec.radius}px`;
-  slideVideo.classList.add("is-on");
+  const frameW = slideRect.width * spec.width;
+  const frameH = slideRect.height * spec.height;
+  videoSlot.style.left = `${slideRect.left - stageRect.left + slideRect.width * spec.left}px`;
+  videoSlot.style.top = `${slideRect.top - stageRect.top + slideRect.height * spec.top}px`;
+  videoSlot.style.width = `${frameW}px`;
+  videoSlot.style.height = `${frameH}px`;
+  videoSlot.style.borderRadius = `${slideRect.width * spec.radius}px`;
+  videoSlot.classList.add("is-on");
+
+  const vw = slideVideo.videoWidth || spec.vw;
+  const vh = slideVideo.videoHeight || spec.vh;
+  const placed = fitEqualPad(frameW, frameH, vw, vh);
+  slideVideo.style.left = `${placed.x}px`;
+  slideVideo.style.top = `${placed.y}px`;
+  slideVideo.style.width = `${placed.w}px`;
+  slideVideo.style.height = `${placed.h}px`;
 
   if (activeVideoSrc !== spec.src) {
     slideVideo.src = spec.src;
@@ -151,6 +205,7 @@ function layoutSlideVideo() {
     activeVideoSrc = spec.src;
   }
   slideVideo.play().catch(() => {});
+  updateVideoControls();
 }
 
 async function show(pageIndex, { instant = false } = {}) {
@@ -255,7 +310,13 @@ function onKey(event) {
     ArrowRight: () => go(1),
     ArrowDown: () => go(1),
     PageDown: () => go(1),
-    " ": () => go(1),
+    " ": () => {
+      if (videoSlot.classList.contains("is-on") && videoSlot.matches(":hover")) {
+        toggleVideoPlay();
+        return;
+      }
+      go(1);
+    },
     ArrowLeft: () => go(-1),
     ArrowUp: () => go(-1),
     PageUp: () => go(-1),
@@ -323,6 +384,37 @@ document.getElementById("gate-form").addEventListener("submit", (event) => {
   input.value = "";
   input.focus();
 });
+
+slideVideo.addEventListener("loadedmetadata", () => layoutSlideVideo());
+slideVideo.addEventListener("timeupdate", updateVideoControls);
+slideVideo.addEventListener("play", updateVideoControls);
+slideVideo.addEventListener("pause", updateVideoControls);
+videoPlay.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleVideoPlay();
+});
+videoSeek.addEventListener("pointerdown", () => {
+  seekingVideo = true;
+});
+videoSeek.addEventListener("input", () => {
+  const duration = slideVideo.duration || 0;
+  if (!duration) return;
+  slideVideo.currentTime = (Number(videoSeek.value) / 1000) * duration;
+  updateVideoControls();
+});
+videoSeek.addEventListener("change", () => {
+  seekingVideo = false;
+});
+videoSeek.addEventListener("pointerup", () => {
+  seekingVideo = false;
+});
+videoSlot.addEventListener("click", (event) => {
+  if (event.target.closest(".video-controls")) return;
+  toggleVideoPlay();
+});
+videoSlot.addEventListener("wheel", (event) => {
+  event.stopPropagation();
+}, { passive: true });
 
 document.getElementById("hit-prev").addEventListener("click", () => go(-1));
 document.getElementById("hit-next").addEventListener("click", () => go(1));

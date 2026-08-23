@@ -186,20 +186,115 @@ button {
   opacity: 1;
 }
 
+.video-slot {
+  position: absolute;
+  z-index: 6;
+  display: none;
+  overflow: hidden;
+  background: #000;
+  pointer-events: auto;
+}
+
+.video-slot.is-on {
+  display: block;
+}
+
 .slide-video {
   position: absolute;
-  z-index: 4;
-  display: none;
   margin: 0;
   padding: 0;
   border: 0;
   background: #000;
-  object-fit: cover;
-  pointer-events: none;
+  object-fit: fill;
 }
 
-.slide-video.is-on {
+.video-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.15rem 0.9rem 0.7rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity 160ms ease;
+}
+
+.video-slot:hover .video-controls,
+.video-slot:focus-within .video-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.video-controls__play {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+}
+
+.video-controls__play:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.video-controls__icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  display: none;
+}
+
+.video-slot.is-paused .video-controls__icon--play,
+.video-slot:not(.is-paused) .video-controls__icon--pause {
   display: block;
+}
+
+.video-controls__seek {
+  flex: 1 1 auto;
+  appearance: none;
+  height: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+}
+
+.video-controls__seek::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.video-controls__seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.video-controls__time {
+  flex: 0 0 auto;
+  min-width: 4.6rem;
+  color: #fff;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-align: right;
+  letter-spacing: 0.01em;
 }
 
 .hit {
