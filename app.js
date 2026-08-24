@@ -11,6 +11,7 @@ const sectionLabel = document.getElementById("section-label");
 const hint = document.getElementById("hint");
 const videoSlot = document.getElementById("video-slot");
 const slideVideo = document.getElementById("slide-video");
+const ytWrap = document.getElementById("yt-wrap");
 const videoPlay = document.getElementById("video-play");
 const videoSeek = document.getElementById("video-seek");
 const videoTime = document.getElementById("video-time");
@@ -49,16 +50,46 @@ const FRAME_CENTER = {
   radius: 17 / 1920,
 };
 
+// Crop 1195x874 + 23px even matte. Taller than FRAME_CENTER so sides match top/bottom.
+const FRAME_MVP = {
+  left: 319 / 1920,
+  top: 103 / 1080,
+  width: 1282 / 1920,
+  height: 950 / 1080,
+  radius: 17 / 1920,
+};
+
+const FRAME_WB_SHOT = {
+  left: 810 / 1920,
+  top: 276 / 1080,
+  width: 982 / 1920,
+  height: 586 / 1080,
+  radius: 16 / 1920,
+};
+
+// Non-black content inside the source file. Fitted and centered in the frame.
+const CROP_SIDE_UI = { x: 0, y: 14, w: 1432, h: 1018 };
+const CROP_MVP_UI = { x: 131, y: 79, w: 1195, h: 874 };
+const YT_SOURCE_W = 1920;
+const YT_SOURCE_H = 1080;
+
 const VIDEOS = {
-  25: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
-  26: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
-  27: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
-  28: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
-  29: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, ...FRAME_SIDE },
-  38: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, ...FRAME_CENTER },
-  41: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, ...FRAME_CENTER },
-  44: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
-  58: { src: "./media/aligned-product-leadership.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
+  24: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
+  25: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  26: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  27: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  28: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  37: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  40: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  43: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  49: {
+    youtube: "LhFhbQDodZI",
+    start: 40,
+    vw: 1920,
+    vh: 1080,
+    ...FRAME_WB_SHOT,
+  },
+  57: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
   63: { src: "./media/user-scoped-agents.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
 };
 
@@ -74,6 +105,9 @@ let wheelLock = false;
 let overviewBuilt = false;
 let activeVideoSrc = "";
 let seekingVideo = false;
+let ytPlayer = null;
+let ytApiReady = null;
+let ytTick = 0;
 
 const GATE_STORAGE = "deck-unlocked";
 const GATE_PASSWORD = "jujube";
@@ -109,7 +143,7 @@ function preload(pageNumber) {
   const img = new Image();
   img.src = slideSrc(pageNumber);
   const spec = VIDEOS[pageNumber];
-  if (spec) {
+  if (spec?.src) {
     const warm = document.createElement("video");
     warm.preload = "auto";
     warm.muted = true;
@@ -131,19 +165,22 @@ function showChromeBriefly() {
   chromeTimer = window.setTimeout(() => chromeEl.classList.remove("is-on"), 1800);
 }
 
-function fitEqualPad(frameW, frameH, videoW, videoH) {
+function fitCentered(frameW, frameH, videoW, videoH, minPad) {
+  const pad = Math.max(0, minPad);
+  const innerW = Math.max(1, frameW - 2 * pad);
+  const innerH = Math.max(1, frameH - 2 * pad);
   if (!videoW || !videoH) {
-    return { x: 0, y: 0, w: frameW, h: frameH };
+    return { x: pad, y: pad, w: innerW, h: innerH };
   }
-  const ar = videoW / videoH;
-  const pad = (frameW - ar * frameH) / (2 * (1 - ar));
-  if (Number.isFinite(pad) && pad >= 0 && pad < Math.min(frameW, frameH) / 2) {
-    return { x: pad, y: pad, w: frameW - 2 * pad, h: frameH - 2 * pad };
-  }
-  const scale = Math.min(frameW / videoW, frameH / videoH);
+  const scale = Math.min(innerW / videoW, innerH / videoH);
   const w = videoW * scale;
   const h = videoH * scale;
-  return { x: (frameW - w) / 2, y: (frameH - h) / 2, w, h };
+  return {
+    x: (frameW - w) / 2,
+    y: (frameH - h) / 2,
+    w,
+    h,
+  };
 }
 
 function formatTime(seconds) {
@@ -153,7 +190,68 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function currentSpec() {
+  return VIDEOS[index + 1];
+}
+
+function loadYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve();
+  if (ytApiReady) return ytApiReady;
+  ytApiReady = new Promise((resolve) => {
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof prev === "function") prev();
+      resolve();
+    };
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    document.head.append(script);
+  });
+  return ytApiReady;
+}
+
+function youtubeTimes(spec) {
+  const start = spec.start || 0;
+  const duration = Math.max(0, (ytPlayer?.getDuration?.() || 0) - start);
+  const current = Math.max(0, (ytPlayer?.getCurrentTime?.() || 0) - start);
+  return { start, duration, current };
+}
+
+function stopYouTubeTick() {
+  window.clearInterval(ytTick);
+  ytTick = 0;
+}
+
+function startYouTubeTick() {
+  if (ytTick) return;
+  ytTick = window.setInterval(updateVideoControls, 250);
+}
+
+function pauseYouTube() {
+  stopYouTubeTick();
+  try {
+    ytPlayer?.pauseVideo?.();
+  } catch {
+    /* player may not be ready */
+  }
+}
+
 function updateVideoControls() {
+  const spec = currentSpec();
+  if (spec?.youtube && ytPlayer?.getCurrentTime) {
+    const { duration, current } = youtubeTimes(spec);
+    if (!seekingVideo && duration) {
+      videoSeek.value = String(Math.round((current / duration) * 1000));
+    }
+    videoTime.textContent = duration
+      ? `${formatTime(current)} / ${formatTime(duration)}`
+      : "0:00";
+    const playing = ytPlayer.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+    videoSlot.classList.toggle("is-paused", !playing);
+    videoPlay.setAttribute("aria-label", playing ? "Pause" : "Play");
+    return;
+  }
+
   const duration = slideVideo.duration || 0;
   const current = slideVideo.currentTime || 0;
   if (!seekingVideo && duration) {
@@ -167,15 +265,120 @@ function updateVideoControls() {
 }
 
 function toggleVideoPlay() {
+  const spec = currentSpec();
+  if (spec?.youtube && ytPlayer?.playVideo) {
+    const playing = ytPlayer.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+    if (playing) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+    updateVideoControls();
+    return;
+  }
   if (slideVideo.paused) slideVideo.play().catch(() => {});
   else slideVideo.pause();
 }
 
+function placeMedia(el, placed) {
+  el.style.left = `${placed.x}px`;
+  el.style.top = `${placed.y}px`;
+  el.style.width = `${placed.w}px`;
+  el.style.height = `${placed.h}px`;
+}
+
+function scaleYouTubeIframe(placed) {
+  const iframe = ytWrap.querySelector("iframe");
+  if (!iframe) return;
+  const scale = placed.w / YT_SOURCE_W;
+  iframe.setAttribute("width", String(YT_SOURCE_W));
+  iframe.setAttribute("height", String(YT_SOURCE_H));
+  iframe.style.width = `${YT_SOURCE_W}px`;
+  iframe.style.height = `${YT_SOURCE_H}px`;
+  iframe.style.transform = `scale(${scale})`;
+  iframe.style.transformOrigin = "top left";
+}
+
+function requestYouTubeHd(player) {
+  try {
+    player.setPlaybackQuality?.("hd1080");
+    const levels = player.getAvailableQualityLevels?.() || [];
+    const best = ["hd2160", "hd1440", "hd1080", "hd720"].find((q) => levels.includes(q));
+    if (best) player.setPlaybackQuality(best);
+  } catch {
+    /* YouTube may ignore quality hints */
+  }
+}
+
+async function ensureYouTube(spec) {
+  await loadYouTubeApi();
+  const start = spec.start || 0;
+  if (ytPlayer?.loadVideoById) {
+    ytPlayer.mute();
+    ytPlayer.loadVideoById({
+      videoId: spec.youtube,
+      startSeconds: start,
+      suggestedQuality: "hd1080",
+    });
+    requestYouTubeHd(ytPlayer);
+    return;
+  }
+  ytPlayer = new window.YT.Player("yt-host", {
+    width: YT_SOURCE_W,
+    height: YT_SOURCE_H,
+    videoId: spec.youtube,
+    playerVars: {
+      autoplay: 1,
+      mute: 1,
+      start,
+      controls: 0,
+      rel: 0,
+      modestbranding: 1,
+      playsinline: 1,
+      disablekb: 1,
+      fs: 0,
+      iv_load_policy: 3,
+      vq: "hd1080",
+      origin: window.location.origin,
+    },
+    events: {
+      onReady(event) {
+        const specNow = currentSpec();
+        const placed = {
+          x: parseFloat(ytWrap.style.left) || 0,
+          y: parseFloat(ytWrap.style.top) || 0,
+          w: parseFloat(ytWrap.style.width) || YT_SOURCE_W,
+          h: parseFloat(ytWrap.style.height) || YT_SOURCE_H,
+        };
+        scaleYouTubeIframe(placed);
+        event.target.mute();
+        requestYouTubeHd(event.target);
+        event.target.seekTo(specNow?.start || start, true);
+        event.target.playVideo();
+        startYouTubeTick();
+        updateVideoControls();
+      },
+      onStateChange(event) {
+        const specNow = currentSpec();
+        const startAt = specNow?.start || 0;
+        if (event.data === window.YT.PlayerState.ENDED) {
+          event.target.seekTo(startAt, true);
+          event.target.playVideo();
+        }
+        if (event.data === window.YT.PlayerState.PLAYING) {
+          requestYouTubeHd(event.target);
+          startYouTubeTick();
+        }
+        updateVideoControls();
+      },
+    },
+  });
+}
+
 function layoutSlideVideo() {
-  const spec = VIDEOS[index + 1];
+  const spec = currentSpec();
   if (!spec) {
     videoSlot.classList.remove("is-on");
     slideVideo.pause();
+    pauseYouTube();
+    ytWrap.hidden = true;
     activeVideoSrc = "";
     return;
   }
@@ -191,13 +394,54 @@ function layoutSlideVideo() {
   videoSlot.style.borderRadius = `${slideRect.width * spec.radius}px`;
   videoSlot.classList.add("is-on");
 
-  const vw = slideVideo.videoWidth || spec.vw;
-  const vh = slideVideo.videoHeight || spec.vh;
-  const placed = fitEqualPad(frameW, frameH, vw, vh);
-  slideVideo.style.left = `${placed.x}px`;
-  slideVideo.style.top = `${placed.y}px`;
-  slideVideo.style.width = `${placed.w}px`;
-  slideVideo.style.height = `${placed.h}px`;
+  const minPad = 23 * (slideRect.width / 1920);
+
+  if (spec.youtube) {
+    slideVideo.pause();
+    slideVideo.removeAttribute("src");
+    slideVideo.style.display = "none";
+    ytWrap.hidden = false;
+    const placed = fitCentered(frameW, frameH, spec.vw, spec.vh, minPad);
+    placeMedia(ytWrap, placed);
+    scaleYouTubeIframe(placed);
+    const key = `yt:${spec.youtube}:${spec.start || 0}`;
+    if (activeVideoSrc !== key) {
+      activeVideoSrc = key;
+      ensureYouTube(spec);
+    } else {
+      startYouTubeTick();
+      try {
+        ytPlayer?.playVideo?.();
+      } catch {
+        /* ignore */
+      }
+    }
+    updateVideoControls();
+    return;
+  }
+
+  pauseYouTube();
+  ytWrap.hidden = true;
+  slideVideo.style.display = "";
+
+  const srcW = slideVideo.videoWidth || spec.vw;
+  const srcH = slideVideo.videoHeight || spec.vh;
+  const sx = srcW / spec.vw;
+  const sy = srcH / spec.vh;
+  const crop = spec.crop
+    ? {
+        x: spec.crop.x * sx,
+        y: spec.crop.y * sy,
+        w: spec.crop.w * sx,
+        h: spec.crop.h * sy,
+      }
+    : { x: 0, y: 0, w: srcW, h: srcH };
+  const placed = fitCentered(frameW, frameH, crop.w, crop.h, minPad);
+  const scale = placed.w / crop.w;
+  slideVideo.style.left = `${placed.x - crop.x * scale}px`;
+  slideVideo.style.top = `${placed.y - crop.y * scale}px`;
+  slideVideo.style.width = `${srcW * scale}px`;
+  slideVideo.style.height = `${srcH * scale}px`;
 
   if (activeVideoSrc !== spec.src) {
     slideVideo.src = spec.src;
@@ -397,9 +641,18 @@ videoSeek.addEventListener("pointerdown", () => {
   seekingVideo = true;
 });
 videoSeek.addEventListener("input", () => {
+  const spec = currentSpec();
+  const ratio = Number(videoSeek.value) / 1000;
+  if (spec?.youtube && ytPlayer?.seekTo) {
+    const { start, duration } = youtubeTimes(spec);
+    if (!duration) return;
+    ytPlayer.seekTo(start + ratio * duration, true);
+    updateVideoControls();
+    return;
+  }
   const duration = slideVideo.duration || 0;
   if (!duration) return;
-  slideVideo.currentTime = (Number(videoSeek.value) / 1000) * duration;
+  slideVideo.currentTime = ratio * duration;
   updateVideoControls();
 });
 videoSeek.addEventListener("change", () => {

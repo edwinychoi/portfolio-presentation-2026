@@ -208,6 +208,22 @@ button {
   object-fit: fill;
 }
 
+.slide-youtube {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  pointer-events: none;
+}
+
+.slide-youtube iframe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 0;
+  pointer-events: none;
+  transform-origin: top left;
+}
+
 .video-controls {
   position: absolute;
   left: 0;
@@ -307,6 +323,7 @@ button {
   background: transparent;
   cursor: pointer;
   z-index: 5;
+  outline: none;
 }
 
 .hit--prev { left: 0; cursor: w-resize; }
