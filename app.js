@@ -50,15 +50,6 @@ const FRAME_CENTER = {
   radius: 17 / 1920,
 };
 
-// Crop 1195x874 + 23px even matte. Taller than FRAME_CENTER so sides match top/bottom.
-const FRAME_MVP = {
-  left: 319 / 1920,
-  top: 103 / 1080,
-  width: 1282 / 1920,
-  height: 950 / 1080,
-  radius: 17 / 1920,
-};
-
 const FRAME_WB_SHOT = {
   left: 810 / 1920,
   top: 276 / 1080,
@@ -69,7 +60,8 @@ const FRAME_WB_SHOT = {
 
 // Non-black content inside the source file. Fitted and centered in the frame.
 const CROP_SIDE_UI = { x: 0, y: 14, w: 1432, h: 1018 };
-const CROP_MVP_UI = { x: 131, y: 79, w: 1195, h: 874 };
+// Window is 1195x874 at 131,79. Include surrounding black and center it.
+const CROP_MVP_UI = { x: 25, y: 0, w: 1407, h: 1032 };
 const YT_SOURCE_W = 1920;
 const YT_SOURCE_H = 1080;
 
@@ -79,8 +71,8 @@ const VIDEOS = {
   26: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
   27: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
   28: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  37: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  40: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  37: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_CENTER },
+  40: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_CENTER },
   43: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
   49: {
     youtube: "LhFhbQDodZI",
@@ -593,7 +585,7 @@ async function bootDeck() {
   boot.hidden = false;
   bootBar.style.width = "40%";
   deck.hidden = false;
-  await show(parseHash(), { instant: true });
+  await show(0, { instant: true });
   bootBar.style.width = "100%";
   window.setTimeout(() => {
     boot.classList.add("is-gone");
@@ -618,15 +610,27 @@ function unlockDeck() {
 document.getElementById("gate-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const input = document.getElementById("gate-password");
-  const error = document.getElementById("gate-error");
+  const label = document.getElementById("gate-label");
   if (input.value.trim() === GATE_PASSWORD) {
-    error.hidden = true;
+    label.textContent = "Password";
+    label.classList.remove("is-retry");
+    input.classList.remove("is-invalid");
+    input.removeAttribute("aria-invalid");
     unlockDeck();
     return;
   }
-  error.hidden = false;
+  label.textContent = "Retry password";
+  label.classList.add("is-retry");
+  input.classList.add("is-invalid");
+  input.setAttribute("aria-invalid", "true");
   input.value = "";
   input.focus();
+});
+
+document.getElementById("gate-password").addEventListener("input", () => {
+  const input = document.getElementById("gate-password");
+  if (!input.classList.contains("is-invalid")) return;
+  input.classList.remove("is-invalid");
 });
 
 slideVideo.addEventListener("loadedmetadata", () => layoutSlideVideo());

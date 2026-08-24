@@ -94,10 +94,12 @@ button {
   border-bottom-color: var(--blue);
 }
 
-.gate__error {
-  margin: 0.7rem 0 0;
+.gate__label.is-retry {
   color: #c0352b;
-  font-size: 0.9rem;
+}
+
+.gate__input.is-invalid {
+  border-bottom-color: #c0352b;
 }
 
 .gate__submit {
