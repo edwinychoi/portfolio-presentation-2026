@@ -19,7 +19,7 @@ const overview = document.getElementById("overview");
 const overviewGrid = document.getElementById("overview-grid");
 const help = document.getElementById("help");
 
-const PAGE_COUNT = 65;
+const PAGE_COUNT = 66;
 const SECTIONS = [
   { until: 11, label: "Journey" },
   { until: 47, label: "Canvas" },
@@ -75,23 +75,16 @@ const YT_SOURCE_W = 1920;
 const YT_SOURCE_H = 1080;
 
 const VIDEOS = {
-  24: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
-  25: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  26: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  27: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  28: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  37: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  40: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  43: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
-  49: {
-    youtube: "LhFhbQDodZI",
-    start: 40,
-    vw: 1920,
-    vh: 1080,
-    ...FRAME_WB_SHOT,
-  },
-  57: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  63: { src: "./media/user-scoped-agents.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  25: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
+  26: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  27: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  28: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  29: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  38: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  41: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  44: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  58: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
+  64: { src: "./media/user-scoped-agents.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
