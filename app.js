@@ -61,16 +61,26 @@ const FRAME_MVP = {
 
 const FRAME_WB_SHOT = {
   left: 810 / 1920,
-  top: 276 / 1080,
+  top: 254 / 1080,
   width: 982 / 1920,
-  height: 586 / 1080,
+  height: 572 / 1080,
   radius: 16 / 1920,
+};
+
+// Crop 1440x1014 + 23px even matte. Taller than the previous Claude hole so all four sides match.
+const FRAME_CLAUDE = {
+  left: 319 / 1920,
+  top: 103 / 1080,
+  width: 1282 / 1920,
+  height: 917 / 1080,
+  radius: 17 / 1920,
 };
 
 // Non-black content inside the source file. Fitted and centered in the frame.
 const CROP_SIDE_UI = { x: 0, y: 14, w: 1432, h: 1018 };
 // Browser window inside the black canvas. Scale it to fill like later-mvp.
 const CROP_MVP_UI = { x: 131, y: 79, w: 1195, h: 874 };
+const CROP_CLAUDE = { x: 0, y: 0, w: 1440, h: 1014 };
 const YT_SOURCE_W = 1920;
 const YT_SOURCE_H = 1080;
 
@@ -83,8 +93,15 @@ const VIDEOS = {
   38: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
   41: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
   44: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  50: {
+    youtube: "LhFhbQDodZI",
+    start: 40,
+    vw: 1920,
+    vh: 1080,
+    ...FRAME_WB_SHOT,
+  },
   58: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  64: { src: "./media/user-scoped-agents.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  64: { src: "./media/claude-prototype.mp4", vw: 1440, vh: 1024, crop: CROP_CLAUDE, ...FRAME_CLAUDE },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
