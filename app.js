@@ -19,10 +19,10 @@ const overview = document.getElementById("overview");
 const overviewGrid = document.getElementById("overview-grid");
 const help = document.getElementById("help");
 
-const PAGE_COUNT = 66;
+const PAGE_COUNT = 68;
 const SECTIONS = [
   { until: 11, label: "Journey" },
-  { until: 47, label: "Canvas" },
+  { until: 48, label: "Canvas" },
   { until: Infinity, label: "Workbench" },
 ];
 
@@ -85,23 +85,23 @@ const YT_SOURCE_W = 1920;
 const YT_SOURCE_H = 1080;
 
 const VIDEOS = {
-  25: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
-  26: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  27: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  28: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  29: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  38: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  41: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  44: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
-  50: {
+  26: { src: "./media/translated-ideas-canvas.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE },
+  27: { src: "./media/canvas-ingests-specifications.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  28: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  29: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  30: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
+  39: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  42: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  45: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
+  52: {
     youtube: "LhFhbQDodZI",
     start: 40,
     vw: 1920,
     vh: 1080,
     ...FRAME_WB_SHOT,
   },
-  58: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  64: { src: "./media/claude-prototype.mp4", vw: 1440, vh: 1024, crop: CROP_CLAUDE, ...FRAME_CLAUDE },
+  60: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
+  66: { src: "./media/claude-prototype.mp4", vw: 1440, vh: 1024, crop: CROP_CLAUDE, ...FRAME_CLAUDE },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
