@@ -111,7 +111,7 @@ const VIDEOS = {
     ...FRAME_WB_SHOT,
   },
   60: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  67: { src: "./media/workbench-prototype.mp4", vw: 2276, vh: 1558, ...FRAME_PROTO },
+  67: { src: "./media/workbench-prototype.mp4", vw: 2276, vh: 1558, end: 20, ...FRAME_PROTO },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -232,6 +232,20 @@ function currentSpec() {
   return VIDEOS[index + 1];
 }
 
+// Playable length of the current file, honoring an optional `end` cut point.
+function videoEnd() {
+  const spec = currentSpec();
+  const duration = slideVideo.duration || 0;
+  return spec?.end && duration ? Math.min(spec.end, duration) : duration;
+}
+
+// Loop back to the start at the cut point instead of playing past it.
+function enforceVideoEnd(time) {
+  const spec = currentSpec();
+  if (!spec?.end || spec.youtube || seekingVideo || slideVideo.paused) return;
+  if (time >= spec.end - 0.04) slideVideo.currentTime = 0;
+}
+
 function loadYouTubeApi() {
   if (window.YT?.Player) return Promise.resolve();
   if (ytApiReady) return ytApiReady;
@@ -290,8 +304,8 @@ function updateVideoControls() {
     return;
   }
 
-  const duration = slideVideo.duration || 0;
-  const current = slideVideo.currentTime || 0;
+  const duration = videoEnd();
+  const current = Math.min(slideVideo.currentTime || 0, duration);
   if (!seekingVideo && duration) {
     videoSeek.value = String(Math.round((current / duration) * 1000));
   }
@@ -685,7 +699,18 @@ document.getElementById("gate-password").addEventListener("input", () => {
 });
 
 slideVideo.addEventListener("loadedmetadata", () => layoutSlideVideo());
-slideVideo.addEventListener("timeupdate", updateVideoControls);
+slideVideo.addEventListener("timeupdate", () => {
+  enforceVideoEnd(slideVideo.currentTime);
+  updateVideoControls();
+});
+if (slideVideo.requestVideoFrameCallback) {
+  // Per-frame check so no frame past the cut point is shown for long.
+  const onFrame = (_now, meta) => {
+    enforceVideoEnd(meta.mediaTime);
+    slideVideo.requestVideoFrameCallback(onFrame);
+  };
+  slideVideo.requestVideoFrameCallback(onFrame);
+}
 slideVideo.addEventListener("play", updateVideoControls);
 slideVideo.addEventListener("pause", updateVideoControls);
 videoPlay.addEventListener("click", (event) => {
@@ -705,7 +730,7 @@ videoSeek.addEventListener("input", () => {
     updateVideoControls();
     return;
   }
-  const duration = slideVideo.duration || 0;
+  const duration = videoEnd();
   if (!duration) return;
   slideVideo.currentTime = ratio * duration;
   updateVideoControls();
