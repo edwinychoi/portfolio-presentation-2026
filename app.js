@@ -50,12 +50,12 @@ const FRAME_CENTER = {
   radius: 17 / 1920,
 };
 
-// Crop 1195x874 + 23px even matte. Taller than FRAME_CENTER so all four sides match.
+// Crop 1195x861 + 23px even matte. Taller than FRAME_CENTER so all four sides match.
 const FRAME_MVP = {
   left: 319 / 1920,
   top: 103 / 1080,
   width: 1282 / 1920,
-  height: 950 / 1080,
+  height: 936.5 / 1080,
   radius: 17 / 1920,
 };
 
@@ -87,8 +87,9 @@ const FRAME_CLAUDE = {
 
 // Non-black content inside the source file. Fitted and centered in the frame.
 const CROP_SIDE_UI = { x: 0, y: 14, w: 1432, h: 1018 };
-// Browser window inside the black canvas. Scale it to fill like later-mvp.
-const CROP_MVP_UI = { x: 131, y: 79, w: 1195, h: 874 };
+// Browser window inside the black canvas, minus the clipped tab strip (rows 79-91),
+// so it starts at the toolbar. Scale it to fill like later-mvp.
+const CROP_MVP_UI = { x: 131, y: 92, w: 1195, h: 861 };
 const CROP_CLAUDE = { x: 0, y: 0, w: 1440, h: 1014 };
 const YT_SOURCE_W = 1920;
 const YT_SOURCE_H = 1080;
@@ -99,8 +100,8 @@ const VIDEOS = {
   28: { src: "./media/see-relationships.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
   29: { src: "./media/range-of-users.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
   30: { src: "./media/preview-component.mp4", vw: 1432, vh: 1032, crop: CROP_SIDE_UI, ...FRAME_SIDE },
-  39: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
-  42: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
+  39: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, clipToCrop: true, ...FRAME_MVP },
+  42: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, clipToCrop: true, ...FRAME_MVP },
   45: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
   51: {
     youtube: "LhFhbQDodZI",
@@ -462,6 +463,10 @@ function layoutSlideVideo() {
   slideVideo.style.top = `${placed.y - crop.y * scale}px`;
   slideVideo.style.width = `${srcW * scale}px`;
   slideVideo.style.height = `${srcH * scale}px`;
+  // Hide source pixels outside the crop so they don't show through the matte.
+  slideVideo.style.clipPath = spec.clipToCrop
+    ? `inset(${crop.y * scale}px ${(srcW - crop.x - crop.w) * scale}px ${(srcH - crop.y - crop.h) * scale}px ${crop.x * scale}px)`
+    : "";
 
   if (activeVideoSrc !== spec.src) {
     slideVideo.src = spec.src;
