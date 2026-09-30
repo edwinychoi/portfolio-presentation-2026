@@ -19,7 +19,7 @@ const overview = document.getElementById("overview");
 const overviewGrid = document.getElementById("overview-grid");
 const help = document.getElementById("help");
 
-const PAGE_COUNT = 68;
+const PAGE_COUNT = 69;
 const SECTIONS = [
   { until: 11, label: "Journey" },
   { until: 48, label: "Canvas" },
@@ -93,7 +93,7 @@ const VIDEOS = {
   39: { src: "./media/now-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
   42: { src: "./media/next-mvp.mp4", vw: 1432, vh: 1032, crop: CROP_MVP_UI, ...FRAME_MVP },
   45: { src: "./media/later-mvp.mp4", vw: 1440, vh: 1024, ...FRAME_CENTER },
-  52: {
+  51: {
     youtube: "LhFhbQDodZI",
     start: 40,
     vw: 1920,
@@ -101,7 +101,7 @@ const VIDEOS = {
     ...FRAME_WB_SHOT,
   },
   60: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  66: { src: "./media/claude-prototype.mp4", vw: 1440, vh: 1024, crop: CROP_CLAUDE, ...FRAME_CLAUDE },
+  67: { src: "./media/workbench-prototype.mp4", vw: 2276, vh: 1558, ...FRAME_SIDE },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
