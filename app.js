@@ -67,6 +67,15 @@ const FRAME_WB_SHOT = {
   radius: 16 / 1920,
 };
 
+// 2276x1558 recording + 23px even matte. The slide's black box is shortened to match.
+const FRAME_PROTO = {
+  left: 737 / 1920,
+  top: 154 / 1080,
+  width: 1087 / 1920,
+  height: 759 / 1080,
+  radius: 17 / 1920,
+};
+
 // Crop 1440x1014 + 23px even matte. Taller than the previous Claude hole so all four sides match.
 const FRAME_CLAUDE = {
   left: 319 / 1920,
@@ -101,7 +110,7 @@ const VIDEOS = {
     ...FRAME_WB_SHOT,
   },
   60: { src: "./media/aligned-pms-cpo.mp4", vw: 1440, vh: 1024, ...FRAME_SIDE_WB },
-  67: { src: "./media/workbench-prototype.mp4", vw: 2276, vh: 1558, ...FRAME_SIDE },
+  67: { src: "./media/workbench-prototype.mp4", vw: 2276, vh: 1558, ...FRAME_PROTO },
 };
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
