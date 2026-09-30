@@ -163,12 +163,29 @@ function preload(pageNumber) {
   if (pageNumber < 1 || pageNumber > PAGE_COUNT) return;
   const img = new Image();
   img.src = slideSrc(pageNumber);
-  const spec = VIDEOS[pageNumber];
-  if (spec?.src) {
+}
+
+// Warm only the neighbors' videos and cancel the rest. Abandoned warm-ups hold
+// open connections, which can starve the playing video of data mid-playback.
+const warmVideos = new Map();
+
+function warmNeighborVideos(pageNumber) {
+  const wanted = new Set(
+    [VIDEOS[pageNumber + 1]?.src, VIDEOS[pageNumber - 1]?.src].filter(Boolean),
+  );
+  for (const [src, warm] of warmVideos) {
+    if (wanted.has(src)) continue;
+    warm.removeAttribute("src");
+    warm.load();
+    warmVideos.delete(src);
+  }
+  for (const src of wanted) {
+    if (warmVideos.has(src)) continue;
     const warm = document.createElement("video");
     warm.preload = "auto";
     warm.muted = true;
-    warm.src = spec.src;
+    warm.src = src;
+    warmVideos.set(src, warm);
   }
 }
 
@@ -504,6 +521,7 @@ async function show(pageIndex, { instant = false } = {}) {
       if (!job.instant) showChromeBriefly();
       preload(index + 2);
       preload(index);
+      warmNeighborVideos(index + 1);
     }
   } finally {
     showing = false;
